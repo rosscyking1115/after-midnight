@@ -18,6 +18,7 @@ htmlcov/
 dbt_energy/target/
 dbt_energy/dbt_packages/
 dbt_energy/logs/
+dbt_energy/.user.yml
 *.duckdb
 *.duckdb.wal
 
