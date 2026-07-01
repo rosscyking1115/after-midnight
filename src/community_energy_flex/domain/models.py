@@ -168,3 +168,41 @@ class ScheduledTask:
     @property
     def carbon_saving_g(self) -> float:
         return self.baseline_carbon_g - self.carbon_g
+
+
+@dataclass(frozen=True)
+class Schedule:
+    """A full optimisation result across all tasks.
+
+    Lives in the domain layer (not the optimiser module) because it is the
+    shared result type that reporting, the pipeline, and the retro loop all
+    depend on - they should depend on the domain, not on the optimiser's
+    implementation.
+    """
+
+    objective: Objective
+    tasks: list[ScheduledTask]
+
+    @property
+    def total_cost_p(self) -> float:
+        return sum(t.cost_p for t in self.tasks)
+
+    @property
+    def total_carbon_g(self) -> float:
+        return sum(t.carbon_g for t in self.tasks)
+
+    @property
+    def total_baseline_cost_p(self) -> float:
+        return sum(t.baseline_cost_p for t in self.tasks)
+
+    @property
+    def total_baseline_carbon_g(self) -> float:
+        return sum(t.baseline_carbon_g for t in self.tasks)
+
+    @property
+    def total_cost_saving_p(self) -> float:
+        return self.total_baseline_cost_p - self.total_cost_p
+
+    @property
+    def total_carbon_saving_g(self) -> float:
+        return self.total_baseline_carbon_g - self.total_carbon_g

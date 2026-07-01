@@ -8,12 +8,11 @@ confidence score, and a caveat.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-
 from community_energy_flex.domain.models import (
     Objective,
     ObjectiveWeights,
     PlanningSlot,
+    Schedule,
     ScheduledTask,
     Task,
 )
@@ -25,37 +24,9 @@ from community_energy_flex.optimisation.objective import score_placements
 
 _SLOT_HOURS = 0.5
 
-
-@dataclass(frozen=True)
-class Schedule:
-    """A full optimisation result across all tasks."""
-
-    objective: Objective
-    tasks: list[ScheduledTask]
-
-    @property
-    def total_cost_p(self) -> float:
-        return sum(t.cost_p for t in self.tasks)
-
-    @property
-    def total_carbon_g(self) -> float:
-        return sum(t.carbon_g for t in self.tasks)
-
-    @property
-    def total_baseline_cost_p(self) -> float:
-        return sum(t.baseline_cost_p for t in self.tasks)
-
-    @property
-    def total_baseline_carbon_g(self) -> float:
-        return sum(t.baseline_carbon_g for t in self.tasks)
-
-    @property
-    def total_cost_saving_p(self) -> float:
-        return self.total_baseline_cost_p - self.total_cost_p
-
-    @property
-    def total_carbon_saving_g(self) -> float:
-        return self.total_baseline_carbon_g - self.total_carbon_g
+# ``Schedule`` now lives in the domain layer; re-exported here so existing
+# ``from ...optimisation.rule_based import Schedule`` call sites keep working.
+__all__ = ["Schedule", "optimise"]
 
 
 def optimise(

@@ -22,6 +22,7 @@ from community_energy_flex.domain.models import (
     SLOTS_PER_DAY,
     Objective,
     ObjectiveWeights,
+    Schedule,
     Task,
 )
 from community_energy_flex.monitoring.store import (
@@ -30,7 +31,7 @@ from community_energy_flex.monitoring.store import (
     PipelineRun,
 )
 from community_energy_flex.optimisation.planning import build_planning_slots
-from community_energy_flex.optimisation.rule_based import Schedule, optimise
+from community_energy_flex.optimisation.rule_based import optimise
 
 
 # --- keep-last-good-schedule stores -----------------------------------------

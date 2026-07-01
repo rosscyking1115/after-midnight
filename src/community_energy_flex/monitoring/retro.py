@@ -11,9 +11,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from community_energy_flex.domain.models import PlanningSlot, Task
+from community_energy_flex.domain.models import PlanningSlot, Schedule, Task
 from community_energy_flex.optimisation.energy_model import evaluate_placement
-from community_energy_flex.optimisation.rule_based import Schedule
 
 
 @dataclass(frozen=True)

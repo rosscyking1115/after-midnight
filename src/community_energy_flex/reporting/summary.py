@@ -8,8 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from community_energy_flex.domain.models import slot_to_time
-from community_energy_flex.optimisation.rule_based import Schedule
+from community_energy_flex.domain.models import Schedule, slot_to_time
 
 SAFETY_STATEMENT = (
     "This tool provides planning recommendations only. It does not directly "

@@ -7,4 +7,13 @@ sources:
       become the RAW schema tables loaded by the Dagster pipeline.
     tables:
       - name: seed_carbon_intensity
+        description: Carbon-intensity forecast, one row per slot, stamped at load.
+        # Freshness gates a stale forecast. Meaningful against the Snowflake RAW
+        # table that Dagster stamps per load; against a static dev seed it ages
+        # (expected). Run:  dbt source freshness
+        loaded_at_field: data_fetched_at
+        freshness:
+          warn_after: { count: 6, period: hour }
+          error_after: { count: 12, period: hour }
       - name: seed_tariff_rates
+        description: Half-hourly unit rates, one row per slot.

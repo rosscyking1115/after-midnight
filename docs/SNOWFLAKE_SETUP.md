@@ -27,7 +27,14 @@ export SNOWFLAKE_ROLE=TRANSFORMER            # optional
 pip install -e ".[snowflake]"
 cd dbt_energy
 dbt build --target snowflake                 # vs. the default duckdb 'dev'
+dbt source freshness --target snowflake       # warn >6h / error >12h on carbon RAW
 ```
+
+Source freshness is configured on `raw.seed_carbon_intensity` via its
+`data_fetched_at` load stamp (warn after 6h, error after 12h). It is meaningful
+against the Snowflake RAW table that Dagster stamps on each load; against the
+static dev seed it ages as expected. `dbt build` is unaffected — freshness only
+runs on the explicit `dbt source freshness` command.
 
 ## Cost note
 

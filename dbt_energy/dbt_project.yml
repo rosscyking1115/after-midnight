@@ -9,6 +9,12 @@ test-paths: ["tests"]
 target-path: "target"
 clean-targets: ["target", "dbt_packages"]
 
+seeds:
+  dbt_energy:
+    seed_carbon_intensity:
+      +column_types:
+        data_fetched_at: timestamp
+
 models:
   dbt_energy:
     staging:
