@@ -46,6 +46,8 @@ def scope_rows(user: User, rows: list[T]) -> list[T]:
     if user.role is Role.HOUSEHOLD:
         return [r for r in rows if r.household_id == user.user_id]
     if user.role is Role.COMMUNITY_MANAGER:
+        if user.community_id is None:  # unassigned manager sees nothing, not orphans
+            return []
         return [r for r in rows if r.community_id == user.community_id]
     return []  # PUBLIC and anything else: no real data
 

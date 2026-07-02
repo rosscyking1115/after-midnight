@@ -72,6 +72,9 @@ def _frame_to_tasks(frame: pd.DataFrame) -> tuple[list[Task], list[str]]:
             if pd.isna(row["Earliest start"]) or pd.isna(row["Finish by"]):
                 errors.append(f"Task '{name}': needs an earliest start and a finish-by time.")
                 continue
+            if pd.isna(row["Energy (kWh)"]) or pd.isna(row["Duration (h)"]):
+                errors.append(f"Task '{name}': needs an energy (kWh) and a duration (h).")
+                continue
             finish = clock_to_slot(row["Finish by"])
             if finish == 0:  # 00:00 "finish by" means the end of the day
                 finish = SLOTS_PER_DAY
@@ -129,6 +132,24 @@ _TASK_COLUMN_CONFIG = {
 _ROLE_LABELS = {r: r.value.replace("_", " ").title() for r in Role}
 
 
+def _user_from_oidc(email: str) -> User:
+    """Map a verified OIDC email to a role/community from the configured
+    directory (`[user_roles]` in secrets, the same source that populates
+    APP.USER_ACCESS). An authenticated but unmapped user gets least privilege -
+    PUBLIC (demo only) - never a fabricated household identity."""
+    try:
+        entry = dict(st.secrets.get("user_roles", {})).get(email)
+    except Exception:  # noqa: BLE001 - no secrets file
+        entry = None
+    if entry:
+        return User(
+            user_id=email,
+            role=Role(entry["role"]),
+            community_id=entry.get("community_id"),
+        )
+    return User(user_id=email, role=Role.PUBLIC)
+
+
 def _resolve_user() -> User:
     """The signed-in user. Uses OIDC (st.user) when configured, otherwise a demo
     role picker so the RBAC behaviour can be explored without a provider."""
@@ -139,10 +160,11 @@ def _resolve_user() -> User:
     except Exception:  # noqa: BLE001 - auth provider not configured / unavailable
         oidc, logged_in = None, False
     if logged_in:
-        st.caption(f"Signed in as {oidc.email}")
+        user = _user_from_oidc(oidc.email)
+        st.caption(f"Signed in as {oidc.email} ({_ROLE_LABELS[user.role]})")
         if st.button("Log out"):
             st.logout()
-        return User(user_id=oidc.email, role=Role.HOUSEHOLD, community_id="C1")
+        return user
 
     role = st.selectbox(
         "Demo role", list(Role), index=1, format_func=lambda r: _ROLE_LABELS[r],

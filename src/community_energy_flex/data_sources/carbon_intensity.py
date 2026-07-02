@@ -29,12 +29,24 @@ def _parse_dt(value: str) -> datetime:
 def parse_intensity_periods(payload: dict) -> list[CarbonSlot]:
     """Parse a Carbon Intensity API payload into ordered :class:`CarbonSlot`s.
 
-    Handles both national (``data`` is a list of periods) and regional
-    (``data`` is a dict containing a ``data`` list of periods) shapes.
+    Handles the three shapes the API returns:
+    * national ``/intensity/fw48h`` -> ``data`` is a list of periods;
+    * regional (dict) -> ``data`` is a dict wrapping a ``data`` list of periods;
+    * regional-by-postcode -> ``data`` is a list of one region object, whose own
+      ``data`` field holds the periods.
     """
     data = payload.get("data", [])
-    if isinstance(data, dict):  # regional shape nests one more level
+    if isinstance(data, dict):  # regional (dict) shape nests one more level
         data = data.get("data", [])
+    # regional-by-postcode nests the periods inside a single region wrapper.
+    if (
+        isinstance(data, list)
+        and data
+        and isinstance(data[0], dict)
+        and "data" in data[0]
+        and "from" not in data[0]
+    ):
+        data = data[0]["data"]
 
     slots: list[CarbonSlot] = []
     for i, period in enumerate(data):

@@ -25,6 +25,22 @@ REGIONAL = {
     }
 }
 
+# The real /regional/intensity/fw24h/postcode/{outcode} response: `data` is a
+# LIST of one region object whose own `data` field holds the periods.
+POSTCODE = {
+    "data": [
+        {
+            "regionid": 3, "shortname": "South West", "postcode": "BS1",
+            "data": [
+                {"from": "2026-07-01T00:00Z", "to": "2026-07-01T00:30Z",
+                 "intensity": {"forecast": 88, "index": "low"}},
+                {"from": "2026-07-01T00:30Z", "to": "2026-07-01T01:00Z",
+                 "intensity": {"forecast": 92, "index": "low"}},
+            ],
+        }
+    ]
+}
+
 
 def test_parses_national_periods_with_actuals():
     slots = parse_intensity_periods(NATIONAL)
@@ -37,6 +53,19 @@ def test_parses_nested_regional_shape():
     slots = parse_intensity_periods(REGIONAL)
     assert len(slots) == 1
     assert slots[0].forecast_gco2_per_kwh == 90
+
+
+def test_parses_regional_by_postcode_list_shape():
+    # data is a list wrapping one region object; periods are nested inside it.
+    slots = parse_intensity_periods(POSTCODE)
+    assert len(slots) == 2
+    assert [s.forecast_gco2_per_kwh for s in slots] == [88, 92]
+
+
+def test_client_parses_postcode_forecast():
+    client = CarbonIntensityClient(fetch=lambda url: POSTCODE)
+    slots = client.regional_forecast_by_postcode("BS1")
+    assert len(slots) == 2
 
 
 def test_carbon_curve_pads_to_requested_length():

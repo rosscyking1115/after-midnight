@@ -78,6 +78,12 @@ def test_public_sees_no_real_rows():
     assert scope_rows(User("guest", Role.PUBLIC), ROWS) == []
 
 
+def test_manager_without_a_community_sees_nothing_not_orphans():
+    orphan = Row("C9-H9", None)  # unassigned record
+    rows = [*ROWS, orphan]
+    assert scope_rows(User("mgr", Role.COMMUNITY_MANAGER, community_id=None), rows) == []
+
+
 def test_require_raises_for_missing_permission():
     with pytest.raises(AccessDenied):
         require(User("C1-H1", Role.HOUSEHOLD), Permission.MANAGE_USERS)
