@@ -3,30 +3,41 @@
 // DIVIDE for safe division, COUNTROWS over COUNT, explicit BLANK handling.
 // Model: fct_daily_savings (fact) related to dim_date / dim_device /
 // dim_community by their integer surrogate keys (single-direction filters).
+//
+// After pasting each measure, set its format string (Measure tools ribbon):
+// the "Format:" note above each measure gives the intended string. Also set
+// dim_date[day_name] to Sort by column = day_of_week (Column tools).
 
 // --- Headline savings -------------------------------------------------------
 
+// Format: £#,##0.00
 Total Cost Saving (GBP) =
 DIVIDE ( SUM ( fct_daily_savings[cost_saving_p] ), 100 )
 
+// Format: #,##0.00 "kg"
 Total Carbon Saving (kg) =
 DIVIDE ( SUM ( fct_daily_savings[carbon_saving_g] ), 1000 )
 
+// Format: #,##0
 Peak Slots Avoided =
 SUM ( fct_daily_savings[peak_slots_avoided] )
 
+// Format: #,##0
 Tasks Optimised =
 COUNTROWS ( fct_daily_savings )
 
+// Format: #,##0
 Households Participating =
 DISTINCTCOUNT ( fct_daily_savings[household_id] )
 
+// Format: 0.00
 Avg Recommendation Confidence =
 AVERAGE ( fct_daily_savings[confidence] )
 
 // --- Ratio: safe division against the baseline ------------------------------
 
 // Returns BLANK when there is no baseline - never a #DIV/0.
+// Format: 0.0%
 Cost Saving % =
 VAR SavingP = SUM ( fct_daily_savings[cost_saving_p] )
 VAR BaselineP = SUM ( fct_daily_savings[baseline_cost_p] )
@@ -36,6 +47,7 @@ RETURN
 // --- Time intelligence: month-over-month (the slow-when-sliced case) --------
 
 // Returns BLANK in the first period, by design.
+// Format: +0.0%;-0.0%
 Cost Saving (GBP) MoM % =
 VAR CurrentSaving = [Total Cost Saving (GBP)]
 VAR PriorSaving =
@@ -48,6 +60,7 @@ RETURN
 
 // --- Confidence-gated saving: only count High/Medium recommendations --------
 
+// Format: £#,##0.00
 Trusted Cost Saving (GBP) =
 CALCULATE (
     [Total Cost Saving (GBP)],

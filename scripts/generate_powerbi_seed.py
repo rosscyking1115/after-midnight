@@ -25,12 +25,31 @@ from community_energy_flex.domain.models import SLOTS_PER_DAY, Objective, Task
 from community_energy_flex.optimisation.planning import DEFAULT_PEAK_SLOTS, build_planning_slots
 from community_energy_flex.optimisation.rule_based import optimise
 
-OUT = Path(__file__).resolve().parents[1] / "dbt_energy" / "seeds" / "seed_daily_savings.csv"
+SEEDS = Path(__file__).resolve().parents[1] / "dbt_energy" / "seeds"
+OUT = SEEDS / "seed_daily_savings.csv"
+DATES_OUT = SEEDS / "seed_dates.csv"
 
 COMMUNITIES = [("C1", "Riverside Centre"), ("C2", "Hilltop Community")]
 HOUSEHOLDS_PER_COMMUNITY = 2
 DAYS = 14
 START = date(2026, 6, 24)
+
+# DAX time intelligence (DATEADD etc.) requires a contiguous date table spanning
+# full calendar years, so the date spine covers whole years around the fact data
+# - not just the dates that happen to appear in the fact.
+SPINE_START = date(2026, 1, 1)
+SPINE_END = date(2026, 12, 31)
+
+
+def write_date_spine() -> int:
+    with DATES_OUT.open("w", newline="", encoding="utf-8") as fh:
+        writer = csv.writer(fh)
+        writer.writerow(["full_date"])
+        day = SPINE_START
+        while day <= SPINE_END:
+            writer.writerow([day.isoformat()])
+            day += timedelta(days=1)
+    return (SPINE_END - SPINE_START).days + 1
 
 
 def demo_tasks() -> list[Task]:
@@ -116,6 +135,8 @@ def main() -> int:
         f"{OUT.name}: {len(rows)} rows over {days} days, {households} households, "
         f"{total_avoided} peak slots avoided in total"
     )
+    spine_days = write_date_spine()
+    print(f"{DATES_OUT.name}: {spine_days} contiguous dates ({SPINE_START} .. {SPINE_END})")
     return 0
 
 

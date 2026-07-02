@@ -36,10 +36,16 @@ need them in Power BI.
 | `dim_device[device_key]` | `fct_daily_savings[device_key]` |
 | `dim_community[community_key]` | `fct_daily_savings[community_key]` |
 
-Then: mark `dim_date` as the date table (Table tools → Mark as date table →
-`full_date`); hide the three `*_key` columns in `fct_daily_savings` from report
-view; and add the measures from [`../powerbi/measures.dax`](../powerbi/measures.dax)
-(New measure → paste one `Name = …` block at a time).
+Then:
+- mark `dim_date` as the date table (Table tools → Mark as date table → `full_date`)
+  — the dimension is a **contiguous full-year date spine**, which DAX time
+  intelligence requires (a date table with gaps silently breaks DATEADD);
+- hide the three `*_key` columns in `fct_daily_savings` from report view;
+- set `dim_date[day_name]` → Column tools → **Sort by column** → `day_of_week`
+  (otherwise weekdays sort alphabetically);
+- add the measures from [`../powerbi/measures.dax`](../powerbi/measures.dax)
+  (New measure → paste one `Name = …` block at a time), setting each measure's
+  **format string** per the `// Format:` note above it (Measure tools ribbon).
 
 ## 2. Pages
 
@@ -47,9 +53,10 @@ view; and add the measures from [`../powerbi/measures.dax`](../powerbi/measures.
 `Total Carbon Saving (kg)`, `Peak Slots Avoided`, `Tasks Optimised`,
 `Avg Recommendation Confidence`.
 
-**Page 2 — Cost & Carbon Timeline.** Line chart of `rpt_daily_savings` over
-`dim_date[full_date]`; `Cost Saving (GBP) MoM %` KPI; baseline-vs-optimised
-columns.
+**Page 2 — Cost & Carbon Timeline.** Line chart of `Total Cost Saving (GBP)`
+over `dim_date[full_date]` (measures on the star — the `rpt_*` marts stay out
+of the pbix); `Cost Saving (GBP) MoM %` KPI; baseline-vs-optimised columns; a
+date-range slicer.
 
 **Page 3 — Device Contribution.** Bar of `Total Cost Saving` by
 `dim_device[device_type]`; `Peak Slots Avoided` by device.
