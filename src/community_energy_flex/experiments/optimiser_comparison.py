@@ -16,6 +16,7 @@ from dataclasses import dataclass
 
 from community_energy_flex.domain.models import Objective, ObjectiveWeights, PlanningSlot, Task
 from community_energy_flex.optimisation.linear_programming import optimise_lp
+from community_energy_flex.optimisation.metrics import average_confidence, constraint_violations
 from community_energy_flex.optimisation.rule_based import Schedule, optimise
 
 
@@ -31,32 +32,14 @@ class ComparisonResult:
     schedule: Schedule
 
 
-def _violations(tasks: list[Task], schedule: Schedule) -> int:
-    by_id = {t.task_id: t for t in tasks}
-    return sum(
-        1
-        for st in schedule.tasks
-        if st.start_index < by_id[st.task_id].earliest_start
-        or st.end_index > by_id[st.task_id].latest_finish
-    )
-
-
-def _avg_confidence(schedule: Schedule) -> float:
-    return (
-        sum(t.confidence for t in schedule.tasks) / len(schedule.tasks)
-        if schedule.tasks
-        else 0.0
-    )
-
-
 def _result(name: str, tasks, schedule: Schedule, runtime_s: float) -> ComparisonResult:
     return ComparisonResult(
         optimiser=name,
         objective=str(schedule.objective),
         total_cost_saving_p=round(schedule.total_cost_saving_p, 3),
         total_carbon_saving_g=round(schedule.total_carbon_saving_g, 3),
-        avg_confidence=round(_avg_confidence(schedule), 3),
-        constraint_violations=_violations(tasks, schedule),
+        avg_confidence=round(average_confidence(schedule), 3),
+        constraint_violations=constraint_violations(tasks, schedule),
         runtime_s=round(runtime_s, 5),
         schedule=schedule,
     )

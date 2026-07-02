@@ -12,6 +12,8 @@ Requires the ``optim`` extra:  pip install '.[optim]'
 
 from __future__ import annotations
 
+from dataclasses import replace
+
 from community_energy_flex.domain.models import (
     Objective,
     ObjectiveWeights,
@@ -27,6 +29,10 @@ from community_energy_flex.optimisation.feasible_windows import feasible_start_i
 from community_energy_flex.optimisation.objective import score_placements
 
 _SLOT_HOURS = 0.5
+
+
+def _band(value: float) -> str:
+    return "High" if value >= 0.75 else "Medium" if value >= 0.5 else "Low"
 
 
 class InfeasibleScheduleError(RuntimeError):
@@ -57,25 +63,6 @@ def task_power_kw(task: Task) -> float:
     return task.energy_per_slot_kwh / _SLOT_HOURS
 
 
-def _placement_coefficient(
-    cost_p: float, carbon_g: float, comfort: float,
-    objective: Objective, weights: ObjectiveWeights,
-    cost_scale: float, carbon_scale: float,
-) -> float:
-    """Linear objective coefficient for a placement (lower is better)."""
-    nc, ncarb = cost_p / cost_scale, carbon_g / carbon_scale
-    if objective is Objective.CHEAPEST:
-        return cost_p
-    if objective is Objective.LOWEST_CARBON:
-        return carbon_g
-    if objective is Objective.BALANCED:
-        total_w = weights.cost + weights.carbon + weights.comfort
-        return (weights.cost * nc + weights.carbon * ncarb + weights.comfort * comfort) / total_w
-    if objective is Objective.AVOID_PEAK:
-        return 0.5 * nc + 0.5 * ncarb  # peak handled as a hard constraint below
-    raise ValueError(f"unknown objective {objective}")
-
-
 def optimise_lp(
     tasks: list[Task],
     slots: list[PlanningSlot],
@@ -90,26 +77,25 @@ def optimise_lp(
     weights = weights or ObjectiveWeights()
     num_slots = len(slots)
 
-    # Pre-compute every task's feasible placements and comfort penalties.
+    # Score every task's feasible placements with the SAME scorer the rule-based
+    # optimiser uses, so the two agree except for the LP's added constraints. The
+    # per-placement score (0..1, lower is better) is the LP objective coefficient.
     feasible: dict[str, list[int]] = {}
     placements: dict[str, dict[int, object]] = {}
-    comfort: dict[str, dict[int, float]] = {}
-    all_cost, all_carbon = [1e-9], [1e-9]
+    scores: dict[str, dict[int, float]] = {}
+    sorted_scores: dict[str, list[float]] = {}
+    best_start: dict[str, int] = {}
     for task in tasks:
         starts = feasible_start_indices(task, num_slots)
         if not starts:
             continue
+        placs = all_placements(task, slots, starts)
+        scored = score_placements(task, placs, slots, objective, weights)  # best first
         feasible[task.task_id] = starts
-        placements[task.task_id] = {p.start_index: p for p in all_placements(task, slots, starts)}
-        span = max(starts) - min(starts)
-        has_pref = task.preferred_start is not None and span
-        comfort[task.task_id] = {
-            s: (abs(s - task.preferred_start) / span if has_pref else 0.0) for s in starts
-        }
-        all_cost += [p.cost_p for p in placements[task.task_id].values()]
-        all_carbon += [p.carbon_g for p in placements[task.task_id].values()]
-
-    cost_scale, carbon_scale = max(all_cost), max(all_carbon)
+        placements[task.task_id] = {p.start_index: p for p in placs}
+        scores[task.task_id] = {sp.placement.start_index: sp.score for sp in scored}
+        sorted_scores[task.task_id] = [sp.score for sp in scored]
+        best_start[task.task_id] = scored[0].placement.start_index
 
     prob = pulp.LpProblem("energy_schedule", pulp.LpMinimize)
     x: dict[tuple[str, int], object] = {}
@@ -117,14 +103,8 @@ def optimise_lp(
         for s in starts:
             x[(tid, s)] = pulp.LpVariable(f"x_{tid}_{s}", cat="Binary")
 
-    # Objective.
     prob += pulp.lpSum(
-        x[(tid, s)] * _placement_coefficient(
-            placements[tid][s].cost_p, placements[tid][s].carbon_g,
-            comfort[tid][s], objective, weights, cost_scale, carbon_scale,
-        )
-        for tid, starts in feasible.items()
-        for s in starts
+        x[(tid, s)] * scores[tid][s] for tid, starts in feasible.items() for s in starts
     )
 
     # Each task runs once (must_run) or at most once (optional).
@@ -157,21 +137,30 @@ def optimise_lp(
     for tid, starts in feasible.items():
         chosen = next(s for s in starts if round(pulp.value(x[(tid, s)])) == 1)
         task = tasks_by_id[tid]
-        best = placements[tid][chosen]
+        place = placements[tid][chosen]
         base = baseline_placement(task, slots)
-        scored = score_placements(task, list(placements[tid].values()), slots, objective, weights)
         conf = compute_confidence(
-            [sp.score for sp in scored],
+            sorted_scores[tid],
             horizon_hours=chosen * _SLOT_HOURS,
             using_actual_carbon=using_actual_carbon,
             tariff_is_manual=tariff_is_manual,
             single_option=len(starts) == 1,
         )
+        # If a shared constraint (peak-load) forced this task off its own best
+        # slot, don't report the landscape's high confidence - say so instead.
+        if chosen != best_start[tid]:
+            capped = min(conf.value, 0.6)
+            conf = replace(
+                conf,
+                value=capped,
+                band=_band(capped),
+                caveat="Constrained by the peak-load limit - not the standalone-best time.",
+            )
         scheduled.append(
             ScheduledTask(
                 task_id=tid, device_type=task.device_type,
                 start_index=chosen, end_index=chosen + task.duration_slots,
-                cost_p=best.cost_p, carbon_g=best.carbon_g,
+                cost_p=place.cost_p, carbon_g=place.carbon_g,
                 baseline_start_index=base.start_index,
                 baseline_cost_p=base.cost_p, baseline_carbon_g=base.carbon_g,
                 confidence=conf.value, confidence_band=conf.band, caveat=conf.caveat,

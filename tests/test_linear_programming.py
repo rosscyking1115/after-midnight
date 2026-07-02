@@ -57,6 +57,15 @@ def test_all_must_run_tasks_scheduled_once(varied_slots):
     assert {st.task_id for st in sched.tasks} == {"a", "b"}
 
 
+def test_peak_constrained_task_reports_an_honest_caveat(varied_slots):
+    # The task the cap pushed off the cheapest slot must not claim high
+    # confidence; it says it was constrained.
+    sched = optimise_lp(_two_unit_tasks(), varied_slots, Objective.CHEAPEST, max_load_kw=3.0)
+    forced = next(st for st in sched.tasks if st.start_index != 2)
+    assert "peak-load limit" in forced.caveat
+    assert forced.confidence <= 0.6
+
+
 def test_infeasible_when_peak_limit_below_a_single_task(varied_slots):
     # A single 2 kW task cannot fit under a 1 kW cap.
     with pytest.raises(InfeasibleScheduleError):

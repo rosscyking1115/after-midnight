@@ -8,15 +8,13 @@ tests.
 
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass
 from urllib.parse import urlencode
-from urllib.request import Request, urlopen
 
+from community_energy_flex.data_sources.http import get_json
 from community_energy_flex.domain.models import SLOTS_PER_DAY
 
 BASE_URL = "https://api.open-meteo.com/v1/forecast"
-_USER_AGENT = "community-energy-flexibility-os/0.1 (+https://github.com)"
 _HOURLY_VARS = ("temperature_2m", "cloud_cover", "wind_speed_10m")
 
 
@@ -76,12 +74,7 @@ class WeatherClient:
 
     def __init__(self, base_url: str = BASE_URL, fetch=None) -> None:
         self.base_url = base_url
-        self._fetch = fetch or self._http_get
-
-    def _http_get(self, url: str) -> dict:
-        req = Request(url, headers={"Accept": "application/json", "User-Agent": _USER_AGENT})
-        with urlopen(req, timeout=20) as resp:  # noqa: S310 - fixed https host
-            return json.loads(resp.read().decode("utf-8"))
+        self._fetch = fetch or get_json
 
     def hourly_forecast(self, latitude: float, longitude: float) -> list[WeatherHour]:
         query = urlencode(

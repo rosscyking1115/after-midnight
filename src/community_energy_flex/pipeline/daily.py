@@ -30,6 +30,7 @@ from community_energy_flex.monitoring.store import (
     OptimisationQuality,
     PipelineRun,
 )
+from community_energy_flex.optimisation.metrics import average_confidence, constraint_violations
 from community_energy_flex.optimisation.planning import build_planning_slots
 from community_energy_flex.optimisation.rule_based import optimise
 
@@ -86,22 +87,6 @@ def validate_carbon_curve(curve: list[float], expected_slots: int = SLOTS_PER_DA
         )
     if any(v is None or v < 0 for v in curve[:expected_slots]):
         raise DataValidationError("carbon curve contains missing or negative values")
-
-
-def _constraint_violations(tasks: list[Task], schedule: Schedule) -> int:
-    by_id = {t.task_id: t for t in tasks}
-    violations = 0
-    for st in schedule.tasks:
-        task = by_id[st.task_id]
-        if st.start_index < task.earliest_start or st.end_index > task.latest_finish:
-            violations += 1
-    return violations
-
-
-def _avg_confidence(schedule: Schedule) -> float:
-    if not schedule.tasks:
-        return 0.0
-    return sum(t.confidence for t in schedule.tasks) / len(schedule.tasks)
 
 
 # --- orchestrated run -------------------------------------------------------
@@ -181,8 +166,8 @@ def run_daily_pipeline(
                 task_count=len(schedule.tasks),
                 total_cost_saving_p=round(schedule.total_cost_saving_p, 3),
                 total_carbon_saving_g=round(schedule.total_carbon_saving_g, 3),
-                avg_confidence=round(_avg_confidence(schedule), 3),
-                constraint_violations=_constraint_violations(config.tasks, schedule),
+                avg_confidence=round(average_confidence(schedule), 3),
+                constraint_violations=constraint_violations(config.tasks, schedule),
             )
         )
     _record_run("success", len(curve), "")

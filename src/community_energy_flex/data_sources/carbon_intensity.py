@@ -11,14 +11,12 @@ core package pulls in no third-party HTTP dependency.
 
 from __future__ import annotations
 
-import json
 from datetime import datetime
-from urllib.request import Request, urlopen
 
+from community_energy_flex.data_sources.http import get_json
 from community_energy_flex.domain.models import SLOTS_PER_DAY, CarbonSlot
 
 BASE_URL = "https://api.carbonintensity.org.uk"
-_USER_AGENT = "community-energy-flexibility-os/0.1 (+https://github.com)"
 
 
 def _parse_dt(value: str) -> datetime:
@@ -79,12 +77,7 @@ class CarbonIntensityClient:
 
     def __init__(self, base_url: str = BASE_URL, fetch=None) -> None:
         self.base_url = base_url.rstrip("/")
-        self._fetch = fetch or self._http_get
-
-    def _http_get(self, url: str) -> dict:
-        req = Request(url, headers={"Accept": "application/json", "User-Agent": _USER_AGENT})
-        with urlopen(req, timeout=20) as resp:  # noqa: S310 - fixed https host
-            return json.loads(resp.read().decode("utf-8"))
+        self._fetch = fetch or get_json
 
     def national_forecast_48h(self) -> list[CarbonSlot]:
         return parse_intensity_periods(self._fetch(f"{self.base_url}/intensity/fw48h"))

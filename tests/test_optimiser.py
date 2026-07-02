@@ -78,3 +78,22 @@ def test_cheapest_never_costs_more_than_baseline(sample_slots):
 def test_lowest_carbon_never_emits_more_than_baseline(sample_slots):
     sched = optimise(sample_tasks(), sample_slots, Objective.LOWEST_CARBON)
     assert sched.total_carbon_g <= sched.total_baseline_carbon_g + 1e-9
+
+
+def test_comfort_penalty_is_bounded_on_a_short_horizon():
+    # preferred_start (validated against the full day) can sit outside the
+    # feasible-start range on a truncated horizon; the comfort penalty must stay
+    # <= 1 so it can't swamp the normalised cost/carbon terms.
+    from community_energy_flex.data_sources.tariffs import FlatTariff
+    from community_energy_flex.domain.models import ObjectiveWeights
+    from community_energy_flex.optimisation.energy_model import all_placements
+    from community_energy_flex.optimisation.feasible_windows import feasible_start_indices
+    from community_energy_flex.optimisation.objective import score_placements
+
+    slots = build_planning_slots([100.0] * 10, FlatTariff(unit_rate_p=10.0), num_slots=10)
+    task = Task("t", "d", energy_kwh=1.0, duration_slots=2, earliest_start=0,
+                latest_finish=48, preferred_start=40)
+    placements = all_placements(task, slots, feasible_start_indices(task, len(slots)))
+    weights = ObjectiveWeights(cost=0.0, carbon=0.0, comfort=1.0)  # pure comfort
+    scored = score_placements(task, placements, slots, Objective.BALANCED, weights)
+    assert max(sp.score for sp in scored) <= 1.0

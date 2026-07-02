@@ -44,7 +44,10 @@ def _comfort_penalties(task: Task, placements: list[Placement]) -> list[float]:
     span = max(starts) - min(starts)
     if span == 0:
         return [0.0 for _ in placements]
-    return [abs(p.start_index - task.preferred_start) / span for p in placements]
+    # Clamp to 1.0: preferred_start is validated against the full day, but the
+    # horizon may be shorter, so the raw ratio can exceed 1 and would otherwise
+    # swamp the normalised 0..1 cost/carbon terms.
+    return [min(1.0, abs(p.start_index - task.preferred_start) / span) for p in placements]
 
 
 def score_placements(

@@ -12,11 +12,10 @@ Tariff codes are regional, e.g. product ``AGILE-24-04-03`` with tariff
 
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass
-from datetime import date, datetime, timedelta
-from urllib.request import Request, urlopen
+from datetime import UTC, date, datetime, timedelta
 
+from community_energy_flex.data_sources.http import get_json
 from community_energy_flex.data_sources.tariffs import (
     MultiBandTariff,
     multiband_from_half_hour_prices,
@@ -24,12 +23,11 @@ from community_energy_flex.data_sources.tariffs import (
 from community_energy_flex.domain.models import SLOTS_PER_DAY
 
 BASE_URL = "https://api.octopus.energy/v1"
-_USER_AGENT = "community-energy-flexibility-os/0.1 (+https://github.com)"
 
 
 def _parse_dt(value: str) -> datetime:
-    # e.g. "2026-07-01T00:00:00Z"
-    return datetime.strptime(value, "%Y-%m-%dT%H:%M:%SZ")
+    # e.g. "2026-07-01T00:00:00Z" -> timezone-aware UTC (the API is UTC).
+    return datetime.strptime(value, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=UTC)
 
 
 @dataclass(frozen=True)
@@ -55,10 +53,11 @@ def parse_agile_rates(payload: dict) -> list[AgileRate]:
 def day_price_curve(
     rates: list[AgileRate], day: date, num_slots: int = SLOTS_PER_DAY
 ) -> list[float]:
-    """Half-hourly price array for ``day``. Slots with no matching rate carry the
-    previous slot's price forward."""
+    """Half-hourly price array for ``day`` (interpreted as a UTC date, matching
+    the UTC carbon data the slots align to). Slots with no matching rate carry
+    the previous slot's price forward."""
     by_start = {r.valid_from: r.price_p for r in rates}
-    midnight = datetime(day.year, day.month, day.day)
+    midnight = datetime(day.year, day.month, day.day, tzinfo=UTC)
     curve: list[float] = []
     last: float | None = None
     for i in range(num_slots):
@@ -89,12 +88,7 @@ class OctopusAgileClient:
 
     def __init__(self, base_url: str = BASE_URL, fetch=None) -> None:
         self.base_url = base_url.rstrip("/")
-        self._fetch = fetch or self._http_get
-
-    def _http_get(self, url: str) -> dict:
-        req = Request(url, headers={"Accept": "application/json", "User-Agent": _USER_AGENT})
-        with urlopen(req, timeout=20) as resp:  # noqa: S310 - fixed https host
-            return json.loads(resp.read().decode("utf-8"))
+        self._fetch = fetch or get_json
 
     def unit_rates(self, product_code: str, tariff_code: str) -> list[AgileRate]:
         url = (
