@@ -26,23 +26,25 @@ AVERAGE ( fct_daily_savings[confidence] )
 
 // --- Ratio: safe division against the baseline ------------------------------
 
+// Returns BLANK when there is no baseline - never a #DIV/0.
 Cost Saving % =
-VAR SavingP    = SUM ( fct_daily_savings[cost_saving_p] )
-VAR BaselineP  = SUM ( fct_daily_savings[baseline_cost_p] )
+VAR SavingP = SUM ( fct_daily_savings[cost_saving_p] )
+VAR BaselineP = SUM ( fct_daily_savings[baseline_cost_p] )
 RETURN
-    DIVIDE ( SavingP, BaselineP )   // BLANK when no baseline, never a #DIV/0
+    DIVIDE ( SavingP, BaselineP )
 
 // --- Time intelligence: month-over-month (the slow-when-sliced case) --------
 
+// Returns BLANK in the first period, by design.
 Cost Saving (GBP) MoM % =
-VAR Current  = [Total Cost Saving (GBP)]
-VAR Prior    =
+VAR CurrentSaving = [Total Cost Saving (GBP)]
+VAR PriorSaving =
     CALCULATE (
         [Total Cost Saving (GBP)],
         DATEADD ( dim_date[full_date], -1, MONTH )
     )
 RETURN
-    DIVIDE ( Current - Prior, Prior )   // BLANK in the first period, by design
+    DIVIDE ( CurrentSaving - PriorSaving, PriorSaving )
 
 // --- Confidence-gated saving: only count High/Medium recommendations --------
 

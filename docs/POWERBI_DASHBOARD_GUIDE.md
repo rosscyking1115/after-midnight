@@ -61,7 +61,17 @@ columns.
 `Trusted Cost Saving (GBP)` vs total (shows how much saving is high-confidence);
 data-freshness and constraint-violation indicators from `MONITORING.*`.
 
-## 3. Publish
+## 3. Apply the theme
+
+**View ribbon → Themes dropdown → Browse for themes →** select
+[`../powerbi/theme.json`](../powerbi/theme.json). One click restyles every page:
+green = savings, amber = neutral, red = warnings, card callouts in the brand
+green, consistent Segoe UI type, and soft card borders. After applying, spend a
+few minutes on layout: select visuals → **Format ribbon → Align / Distribute**
+so cards share edges and spacing, and replace any auto-generated visual titles
+("Sum of x by y") with plain English via **Format visual → General → Title**.
+
+## 4. Publish
 
 Export a PDF and screenshots into `powerbi/screenshots/` for the README and the
 case study. Keep the safety caveat visible: planning advice only, no guaranteed

@@ -1,0 +1,55 @@
+{
+  "name": "Community Energy Flexibility",
+  "dataColors": [
+    "#1B7A5A",
+    "#2A9D8F",
+    "#E9A23B",
+    "#3D5A80",
+    "#8AB17D",
+    "#C44536",
+    "#5C6B73",
+    "#98C1D9"
+  ],
+  "foreground": "#2D3748",
+  "foregroundNeutralSecondary": "#4A5568",
+  "foregroundNeutralTertiary": "#A0AEC0",
+  "background": "#FFFFFF",
+  "backgroundLight": "#F5F7F6",
+  "backgroundNeutral": "#E2E8F0",
+  "tableAccent": "#1B7A5A",
+  "good": "#1B7A5A",
+  "neutral": "#E9A23B",
+  "bad": "#C44536",
+  "maximum": "#1B7A5A",
+  "center": "#E9A23B",
+  "minimum": "#C44536",
+  "null": "#A0AEC0",
+  "hyperlink": "#2A9D8F",
+  "textClasses": {
+    "title": { "fontFace": "Segoe UI Semibold", "fontSize": 13, "color": "#1A202C" },
+    "header": { "fontFace": "Segoe UI Semibold", "fontSize": 12, "color": "#2D3748" },
+    "callout": { "fontFace": "Segoe UI Semibold", "fontSize": 30, "color": "#1B7A5A" },
+    "label": { "fontFace": "Segoe UI", "fontSize": 10, "color": "#4A5568" }
+  },
+  "visualStyles": {
+    "*": {
+      "*": {
+        "background": [{ "show": true, "color": { "solid": { "color": "#FFFFFF" } }, "transparency": 0 }],
+        "border": [{ "show": true, "color": { "solid": { "color": "#E2E8F0" } }, "radius": 8 }],
+        "title": [{
+          "show": true,
+          "fontColor": { "solid": { "color": "#1A202C" } },
+          "fontSize": 12,
+          "fontFamily": "Segoe UI Semibold",
+          "alignment": "left"
+        }]
+      }
+    },
+    "card": {
+      "*": {
+        "labels": [{ "color": { "solid": { "color": "#1B7A5A" } }, "fontSize": 30, "fontFamily": "Segoe UI Semibold" }],
+        "categoryLabels": [{ "color": { "solid": { "color": "#4A5568" } }, "fontSize": 11 }]
+      }
+    }
+  }
+}
