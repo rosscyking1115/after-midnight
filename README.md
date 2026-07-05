@@ -1,10 +1,10 @@
-# Community Energy Flexibility OS
+# After Midnight
 
 > Decision-support that tells households and small organisations **when** to run
 > flexible electricity loads to cut cost and carbon — while respecting their
 > comfort constraints.
 
-[![CI](https://github.com/rosscyking1115/community-energy-flexibility-os/actions/workflows/ci.yml/badge.svg)](https://github.com/rosscyking1115/community-energy-flexibility-os/actions/workflows/ci.yml)
+[![CI](https://github.com/rosscyking1115/after-midnight/actions/workflows/ci.yml/badge.svg)](https://github.com/rosscyking1115/after-midnight/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-informational.svg)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](pyproject.toml)
 

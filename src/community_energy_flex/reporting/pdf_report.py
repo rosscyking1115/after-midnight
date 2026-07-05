@@ -29,7 +29,7 @@ def write_pdf_bytes(summary: ActionSummary) -> bytes:
     doc = SimpleDocTemplate(buffer, pagesize=A4, title="Energy Action Report")
     styles = getSampleStyleSheet()
     story = [
-        Paragraph("Community Energy Flexibility - Action Report", styles["Title"]),
+        Paragraph("After Midnight - Action Report", styles["Title"]),
         Paragraph(f"Objective: {summary.objective}", styles["Normal"]),
         Spacer(1, 0.4 * cm),
         Paragraph(

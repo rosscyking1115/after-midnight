@@ -1,4 +1,4 @@
--- Snowflake bootstrap for Community Energy Flexibility OS.
+-- Snowflake bootstrap for After Midnight.
 -- Run once as a role that can create databases/warehouses (e.g. SYSADMIN).
 -- The dbt project (target: snowflake) then builds STAGING/MARTS on top.
 

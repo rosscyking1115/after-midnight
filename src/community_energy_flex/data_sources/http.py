@@ -6,7 +6,7 @@ from __future__ import annotations
 import json
 from urllib.request import Request, urlopen
 
-USER_AGENT = "community-energy-flexibility-os/0.1 (+https://github.com)"
+USER_AGENT = "after-midnight/0.1 (+https://github.com)"
 
 
 def get_json(url: str, timeout: int = 20) -> dict:

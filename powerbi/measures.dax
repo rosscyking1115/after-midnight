@@ -1,4 +1,4 @@
-// Power BI DAX measures for the Community Energy Flexibility dashboard.
+// Power BI DAX measures for the After Midnight dashboard.
 // Written per the dax-optimization guidance: VAR for shared sub-expressions,
 // DIVIDE for safe division, COUNTROWS over COUNT, explicit BLANK handling.
 // Model: fct_daily_savings (fact) related to dim_date / dim_device /

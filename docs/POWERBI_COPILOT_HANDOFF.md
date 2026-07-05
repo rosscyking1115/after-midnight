@@ -32,7 +32,7 @@ single focused task than a list).
 
 ## 1. Context to give Copilot (paste verbatim)
 
-> I'm polishing a Power BI report called **Community Energy Flexibility OS**. It
+> I'm polishing a Power BI report called **After Midnight**. It
 > shows how much **cost and carbon** UK households/communities save by shifting
 > flexible electricity loads (washing machine, EV charge, dishwasher) to cleaner,
 > cheaper half-hours. It is **decision support, not automation** — the product

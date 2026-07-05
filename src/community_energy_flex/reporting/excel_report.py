@@ -26,7 +26,7 @@ def build_workbook(summary: ActionSummary):
 
     ws = wb.active
     ws.title = "Executive Summary"
-    ws["A1"], ws["A1"].font = "Community Energy Flexibility - Action Report", bold
+    ws["A1"], ws["A1"].font = "After Midnight - Action Report", bold
     ws["A3"] = "Objective"
     ws["B3"] = summary.objective
     ws["A4"] = "Estimated cost saving (£)"

@@ -28,7 +28,7 @@ from community_energy_api.models import (
 from community_energy_api.service import run_optimise
 
 app = FastAPI(
-    title="Community Energy Flexibility OS API",
+    title="After Midnight API",
     version="0.1.0",
     description="When to run flexible electricity loads to cut cost and carbon. "
     "Planning advice only - no guaranteed savings.",

@@ -1,4 +1,4 @@
-"""Community Energy Flexibility OS.
+"""After Midnight (Community Energy Flexibility engine).
 
 A decision-support system that recommends when households and small
 organisations should run flexible electricity loads, to reduce cost and carbon

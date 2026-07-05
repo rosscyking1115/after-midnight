@@ -1,4 +1,4 @@
-# Design brief — Community Energy Flexibility website
+# Design brief — After Midnight website
 
 This brief is the *why and how* for the visual build. The *what* (screens, flows,
 data contract) lives in `web/UI_SPEC.md` — read that first and treat it as the

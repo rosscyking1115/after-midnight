@@ -1,4 +1,4 @@
-"""Community Energy Flexibility OS - Streamlit decision app.
+"""After Midnight - Streamlit decision app.
 
 Run with:  streamlit run app/streamlit_app.py
 
@@ -33,7 +33,7 @@ from community_energy_flex.optimisation.rule_based import optimise
 from community_energy_flex.reporting.summary import build_action_summary, format_text_report
 
 st.set_page_config(
-    page_title="Community Energy Flexibility OS",
+    page_title="After Midnight",
     page_icon=":material/bolt:",
     layout="wide",
 )
@@ -220,7 +220,7 @@ else:
     carbon = sample_carbon_curve()
 
 # --- Header + task form -----------------------------------------------------
-st.title("Community Energy Flexibility OS")
+st.title("After Midnight")
 st.caption(
     "Find the best times to run your flexible appliances to cut cost and carbon. "
     "This is planning advice - it never controls your appliances or guarantees savings."

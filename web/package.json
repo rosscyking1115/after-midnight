@@ -2,7 +2,7 @@
   "name": "community-energy-flex-web",
   "version": "0.1.0",
   "private": true,
-  "description": "Website for Community Energy Flexibility OS. Plumbing built here; visual UI built by design.",
+  "description": "After Midnight — the website (Next.js), wired to the public API.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
