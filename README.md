@@ -125,22 +125,42 @@ optional extra. See [docs/RUNBOOK.md](docs/RUNBOOK.md) to run each piece.
 
 ## How it works
 
-```
-Carbon Intensity API ─┐
-Tariff (flat/E7/ToU) ─┼─► half-hourly "energy options" ─► optimiser ───────────► schedule
-Your task constraints ┘        (dbt / DuckDB)             rule-based + LP/MILP     + baseline
-                                                          (peak-load aware)        + savings
-                                                                                   + confidence
-                                                                                      │
-                                    Public API + web ◄──┬── Streamlit app · Excel/PDF report ◄──┘
-                                    (FastAPI + Next.js)  └── Power BI dashboard  (Snowflake star)
+```mermaid
+flowchart LR
+  subgraph Engine
+    direction TB
+    S["48 half-hour slots"] --> O["Optimiser<br/>rule-based + LP/MILP"] --> R["Schedule<br/>baseline + confidence + caveat"]
+  end
+  CI["Carbon Intensity API"] --> S
+  OA["Octopus Agile prices"] --> S
+  R --> API["FastAPI /v1/*"] --> BFF["Next.js BFF"] --> WEB["Web app"]
+  R -. nightly .-> WH[("Reporting star<br/>dbt, DuckDB/Snowflake")] -.-> BI["Power BI"]
+  R -. next day .-> RT["Retro<br/>forecast vs actual"]
 ```
 
-The day is 48 half-hour **slots**. Tasks, tariffs, and carbon forecasts are all
-expressed in slots, so the optimiser reasons over one clean integer axis. Every
-recommendation is compared against a **baseline** (business as usual) and carries a
-**confidence** band and a plain-language **caveat**. The maths behind those three is
-spelled out in [docs/METHODOLOGY.md](docs/METHODOLOGY.md).
+The engine lives in `src/community_energy_flex`. One idea ties it together: **the
+day is 48 half-hour slots**, so tasks, tariffs, and carbon forecasts all share a
+single clean integer axis.
+
+**How a recommendation is derived** — worked for a washing machine (0.8 kWh, 1.5 h,
+must finish by 08:00, usually run at 19:00):
+
+1. **Get the day.** Fetch the region's 48-slot carbon forecast and the half-hourly
+   Agile prices. Slot 0 = 00:00 … slot 47 = 23:30.
+2. **Score every feasible start.** For each start the task could take inside its
+   window, score it by that window's average price and average carbon, blended by
+   the objective's weight (*avoid-peak* adds a penalty over 16:00–19:00).
+3. **Pick the best, measure vs the baseline.** The lowest-scoring window wins, and
+   it's scored against *your usual start* — so the saving is "vs what you'd have
+   done", never a best case. → **run 02:30–04:00 instead of 19:00**.
+4. **Attach the honesty.** Cost and carbon saved (~**14p / 180 g**), a **confidence**
+   band (broad, stable trough → High; sensitive → Low), and a plain **caveat** —
+   never a guarantee.
+5. **Check it the next day.** The [retro](docs/RETRO.md) re-scores that committed
+   plan against the measured actuals — realised vs forecast.
+
+The maths behind the baseline, the scoring, and confidence is in
+[docs/METHODOLOGY.md](docs/METHODOLOGY.md).
 
 ## Project layout
 
