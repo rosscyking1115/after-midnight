@@ -6,6 +6,7 @@
 [![CI](https://github.com/rosscyking1115/after-midnight/actions/workflows/ci.yml/badge.svg)](https://github.com/rosscyking1115/after-midnight/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-informational.svg)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](pyproject.toml)
+[![tests](https://img.shields.io/badge/tests-151%20passing-brightgreen.svg)](https://github.com/rosscyking1115/after-midnight/actions/workflows/ci.yml)
 
 > A personal, open-source **learning project** — a small full-stack + data-engineering
 > build on UK public energy data. **Not a product**, and it doesn't need to be
@@ -100,10 +101,20 @@ The full data path, end to end:
 
 ## Quickstart
 
+**One command** — install and run the worked example end to end (no API keys, no
+services needed):
+
 ```bash
-python -m pip install -e ".[dev]"          # stdlib-only core + tests
-python -m pytest                            # full suite
-python -m community_energy_flex cheapest    # end-to-end on sample data
+python -m pip install -e ".[dev]" && python scripts/case_study.py
+```
+
+It prints a real optimised plan, the £/CO₂ saved, and the forecast-vs-actual
+retro. Then the rest of the toolbox:
+
+```bash
+python -m pytest                            # the full suite (151 tests)
+python -m community_energy_flex cheapest    # optimise on sample data
+python scripts/retro_demo.py                # the forecast-vs-actual table
 ```
 
 Run the decision app:
