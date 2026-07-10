@@ -6,7 +6,7 @@
 [![CI](https://github.com/rosscyking1115/after-midnight/actions/workflows/ci.yml/badge.svg)](https://github.com/rosscyking1115/after-midnight/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-informational.svg)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](pyproject.toml)
-[![tests](https://img.shields.io/badge/tests-151%20passing-brightgreen.svg)](https://github.com/rosscyking1115/after-midnight/actions/workflows/ci.yml)
+[![tests](https://img.shields.io/badge/tests-153%20passing-brightgreen.svg)](https://github.com/rosscyking1115/after-midnight/actions/workflows/ci.yml)
 
 > A personal, open-source **learning project** — a small full-stack + data-engineering
 > build on UK public energy data. **Not a product**, and it doesn't need to be
@@ -14,6 +14,8 @@
 > a scheduling/optimisation engine, a typed contract, and a front end.
 
 **▶ [Live demo](https://after-midnight-beta.vercel.app/)** · [API docs](https://community-energy-flex-api.fly.dev/docs) · [worked example](docs/CASE_STUDY.md)
+
+[![After Midnight's live day-band: a 24-hour view of grid carbon and price, with the cleanest, cheapest window to run a flexible load highlighted, and the cost/carbon saved versus a usual start time](docs/img/planner.png)](https://after-midnight-beta.vercel.app/)
 
 It doesn't just show *"carbon is low at 02:00."* It says *"run the washing machine
 02:30–04:00, charge the EV 01:30–04:30, expected saving £0.12 and 0.14 kg CO₂,

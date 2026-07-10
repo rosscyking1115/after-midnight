@@ -5,7 +5,7 @@ tested without spinning up a scheduler."""
 from community_energy_flex.pipeline.daily import (
     DailyPipelineConfig,
     InMemoryLastGoodStore,
-    PickleLastGoodStore,
+    JsonLastGoodStore,
     PipelineResult,
     fetch_carbon_forecast,
     run_daily_pipeline,
@@ -16,7 +16,7 @@ __all__ = [
     "DailyPipelineConfig",
     "PipelineResult",
     "InMemoryLastGoodStore",
-    "PickleLastGoodStore",
+    "JsonLastGoodStore",
     "run_daily_pipeline",
     "fetch_carbon_forecast",
     "validate_carbon_curve",

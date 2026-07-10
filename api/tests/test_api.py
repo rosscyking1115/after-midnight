@@ -110,3 +110,19 @@ def test_optimise_rejects_impossible_window():
         ],
     }
     assert client.post("/v1/optimise", json=body).status_code == 422
+
+
+def test_optimise_rejects_out_of_bounds_inputs():
+    """The public solver must reject absurd inputs (energy/duration/task-count)
+    at the contract layer, before they reach the optimiser."""
+    base = {"region_id": "london", "tariff": {"kind": "flat", "unit_rate_p": 28.0}}
+    huge_energy = {"name": "X", "device_type": "EV charge", "energy_kwh": 100_000.0,
+                   "duration_hours": 2.0, "latest": "07:00"}
+    huge_duration = {"name": "X", "device_type": "EV charge", "energy_kwh": 5.0,
+                     "duration_hours": 999.0, "latest": "07:00"}
+    ok_task = {"name": "X", "device_type": "Washing machine", "energy_kwh": 0.9,
+               "duration_hours": 1.0, "latest": "07:00"}
+
+    assert client.post("/v1/optimise", json={**base, "tasks": [huge_energy]}).status_code == 422
+    assert client.post("/v1/optimise", json={**base, "tasks": [huge_duration]}).status_code == 422
+    assert client.post("/v1/optimise", json={**base, "tasks": [ok_task] * 51}).status_code == 422

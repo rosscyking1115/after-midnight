@@ -8,11 +8,11 @@ runs in tests with no network and no scheduler.
 
 from __future__ import annotations
 
-import pickle
+import json
 import time
 import uuid
 from collections.abc import Callable
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Protocol
@@ -23,6 +23,7 @@ from community_energy_flex.domain.models import (
     Objective,
     ObjectiveWeights,
     Schedule,
+    ScheduledTask,
     Task,
 )
 from community_energy_flex.monitoring.store import (
@@ -52,20 +53,33 @@ class InMemoryLastGoodStore:
         return self._schedule
 
 
-class PickleLastGoodStore:
-    """Persists the last good schedule to disk so a fallback survives restarts."""
+class JsonLastGoodStore:
+    """Persists the last good schedule to disk so a fallback survives restarts.
+
+    Uses JSON rather than pickle: the artifact stays inert, so loading it can
+    never execute code even if the file on disk is tampered with. The schedule
+    is a flat tree of dataclasses over primitives, so it round-trips cleanly.
+    """
 
     def __init__(self, path: str | Path) -> None:
         self.path = Path(path)
 
     def save(self, schedule: Schedule) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        self.path.write_bytes(pickle.dumps(schedule))
+        payload = {
+            "objective": str(schedule.objective),
+            "tasks": [asdict(t) for t in schedule.tasks],
+        }
+        self.path.write_text(json.dumps(payload), encoding="utf-8")
 
     def load(self) -> Schedule | None:
         if not self.path.exists():
             return None
-        return pickle.loads(self.path.read_bytes())
+        payload = json.loads(self.path.read_text(encoding="utf-8"))
+        return Schedule(
+            objective=Objective(payload["objective"]),
+            tasks=[ScheduledTask(**task) for task in payload["tasks"]],
+        )
 
 
 # --- steps ------------------------------------------------------------------

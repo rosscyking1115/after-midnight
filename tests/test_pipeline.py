@@ -12,6 +12,7 @@ from community_energy_flex.monitoring.store import (
 from community_energy_flex.pipeline.daily import (
     DailyPipelineConfig,
     InMemoryLastGoodStore,
+    JsonLastGoodStore,
     run_daily_pipeline,
 )
 
@@ -52,6 +53,24 @@ def test_falls_back_to_last_good_schedule_on_fetch_failure(tmp_path):
     assert result.status == "fallback"
     assert result.schedule is ok.schedule
     assert store.read(PipelineRun)[-1]["status"] == "fallback"
+
+
+def test_json_last_good_store_round_trips_across_restarts(tmp_path):
+    """The on-disk store must reload an identical schedule (and survive a fresh
+    process) so a fallback works after a restart - without pickle."""
+    store = JsonLastGoodStore(tmp_path / "last_good.json")
+    assert store.load() is None  # nothing saved yet
+
+    saved = run_daily_pipeline(_config(sample_carbon_curve), last_good=store).schedule
+    assert saved is not None
+
+    # A brand-new store pointed at the same file simulates a restart.
+    reloaded = JsonLastGoodStore(tmp_path / "last_good.json").load()
+    assert reloaded is not None
+    assert reloaded.objective == saved.objective
+    assert [t.task_id for t in reloaded.tasks] == [t.task_id for t in saved.tasks]
+    assert reloaded.total_cost_saving_p == saved.total_cost_saving_p
+    assert reloaded.total_carbon_saving_g == saved.total_carbon_saving_g
 
 
 def test_hard_failure_when_no_last_good_available(tmp_path):

@@ -17,7 +17,7 @@ from community_energy_flex.domain.models import SLOTS_PER_DAY, Objective
 from community_energy_flex.monitoring.store import CsvMonitoringStore
 from community_energy_flex.pipeline.daily import (
     DailyPipelineConfig,
-    PickleLastGoodStore,
+    JsonLastGoodStore,
     run_daily_pipeline,
 )
 from community_energy_flex.reporting.summary import build_action_summary, format_text_report
@@ -25,7 +25,7 @@ from community_energy_flex.reporting.summary import build_action_summary, format
 # In a later milestone these become Dagster resources/config (region, tariff,
 # per-user tasks). For now the sample data keeps the graph runnable end to end.
 _STORE = CsvMonitoringStore("monitoring_data")
-_LAST_GOOD = PickleLastGoodStore("monitoring_data/last_good_schedule.pkl")
+_LAST_GOOD = JsonLastGoodStore("monitoring_data/last_good_schedule.json")
 
 
 @asset(description="Half-hourly carbon-intensity forecast for the planning day.")

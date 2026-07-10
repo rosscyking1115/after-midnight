@@ -1,4 +1,5 @@
-# Fly.io config for the API. Rename `app` to your Fly app before first deploy.
+# Fly.io config for the API. `app` is the deployed Fly app name; change it if you
+# deploy your own instance.
 app = "community-energy-flex-api"
 primary_region = "lhr"
 

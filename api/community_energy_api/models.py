@@ -67,8 +67,11 @@ class TariffSpec(BaseModel):
 class TaskSpec(BaseModel):
     name: str
     device_type: str
-    energy_kwh: float = Field(gt=0)
-    duration_hours: float = Field(gt=0)
+    # Upper bounds keep a public, keyless endpoint from being handed absurd
+    # inputs that balloon the solver: 500 kWh covers the largest domestic load
+    # (a full EV charge is ~40-80 kWh) and a task can span at most a single day.
+    energy_kwh: float = Field(gt=0, le=500)
+    duration_hours: float = Field(gt=0, le=24)
     earliest: str = ""  # "HH:MM", empty = start of day
     latest: str = ""  # "HH:MM", empty or "00:00" = end of day
     preferred: str | None = None  # "HH:MM"
@@ -77,7 +80,9 @@ class TaskSpec(BaseModel):
 class OptimiseRequest(BaseModel):
     region_id: str
     tariff: TariffSpec
-    tasks: list[TaskSpec] = Field(min_length=1)
+    # max_length caps the joint LP/MILP problem size; far more than any real
+    # household or community centre schedules in one planning day.
+    tasks: list[TaskSpec] = Field(min_length=1, max_length=50)
     objective: Literal["cheapest", "lowest_carbon", "balanced", "avoid_peak"] = "balanced"
     cost_weight: float = Field(default=0.5, ge=0.0, le=1.0)  # balanced only
 
