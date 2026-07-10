@@ -42,3 +42,6 @@ powerbi/data/
 .idea/
 .vscode/
 .claude/
+
+# internal working docs — kept local, not for the public repo
+/docs/POWERBI_COPILOT_HANDOFF.md
