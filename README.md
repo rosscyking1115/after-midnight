@@ -1,5 +1,8 @@
 # After Midnight
 
+**After Midnight** is the web app; `community-energy-flex` is the repository (the
+full-stack data + optimisation project behind it).
+
 > Works out **when** to run flexible electricity loads — a wash, an EV charge — to
 > cut cost and carbon, from live UK grid data, and shows the working.
 
