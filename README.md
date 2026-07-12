@@ -13,6 +13,13 @@
 > (see [Why this exists](#why-this-exists)). Built to be read: live-API integration,
 > a scheduling/optimisation engine, a typed contract, and a front end.
 
+> One of three UK open-data builds on my profile — siblings
+> [tfl-data-engineering](https://github.com/rosscyking1115/tfl-data-engineering) and
+> [uk-housing-decision-support](https://github.com/rosscyking1115/uk-housing-decision-support)
+> cover the pipeline side; this one closes the loop with optimisation and a
+> forecast-vs-actual retro. Full project map →
+> [profile](https://github.com/rosscyking1115).
+
 **▶ [Live demo](https://after-midnight-beta.vercel.app/)** · [API docs](https://community-energy-flex-api.fly.dev/docs) · [worked example](docs/CASE_STUDY.md)
 
 [![After Midnight's live day-band: a 24-hour view of grid carbon and price, with the cleanest, cheapest window to run a flexible load highlighted, and the cost/carbon saved versus a usual start time](docs/img/planner.png)](https://after-midnight-beta.vercel.app/)
