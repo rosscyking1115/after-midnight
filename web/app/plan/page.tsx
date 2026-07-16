@@ -4,16 +4,18 @@ import { useEffect, useMemo, useState } from "react";
 
 import BandLegend from "@/components/BandLegend";
 import DayBand from "@/components/DayBand";
-import { getAppliances, getForecast, getRegions, optimise } from "@/lib/api";
+import { ApiError, getAppliances, getForecast, getRegions, optimise } from "@/lib/api";
 import { money, grams } from "@/lib/format";
 import { parseWindow, slotToClock, type Window } from "@/lib/scoring";
 import {
   CHIPS,
+  classifyApiError,
   defaultBaseline,
   fits,
   widen,
   windowForChip,
   type Chip,
+  type ErrorKind,
 } from "@/lib/planning";
 import type {
   Appliance,
@@ -26,7 +28,6 @@ import type {
 } from "@/lib/types";
 
 type Phase = "form" | "loading" | "error" | "results";
-type ErrorKind = "422" | "503" | "generic";
 
 interface Added {
   key: string;
@@ -193,12 +194,8 @@ export default function PlanPage() {
       setLiveStatus(`Plan ready. ${res.tasks.length} window(s) found.`);
       window.scrollTo(0, 0);
     } catch (err) {
-      const msg = (err as Error).message ?? "";
-      const kind: ErrorKind = /window|midnight|feasible|too small|preferred/i.test(msg)
-        ? "422"
-        : /unavailable|503/i.test(msg)
-          ? "503"
-          : "generic";
+      const kind: ErrorKind =
+        err instanceof ApiError ? classifyApiError(err.detail, err.status) : "generic";
       setErrorKind(kind);
       setPhase("error");
       setLiveStatus("Error: could not build the plan.");
@@ -410,17 +407,43 @@ export default function PlanPage() {
 
       {phase === "error" && (
         <div role="alert" style={{ animation: "cef-fade .3s ease both", ...panel, borderLeft: "4px solid var(--filament)", padding: 26, maxWidth: 660 }}>
-          <p className="mono" style={{ fontSize: 12, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--slate)", margin: "0 0 10px" }}>{errorKind === "422" ? "Overnight window" : errorKind === "503" ? "Forecast unavailable" : "Something went wrong"}</p>
-          <h2 style={{ fontWeight: 700, fontSize: 22, margin: "0 0 10px", letterSpacing: "-0.01em" }}>{errorKind === "422" ? "That window runs past midnight." : errorKind === "503" ? "We can't reach the forecast right now." : "We couldn't build the plan."}</h2>
-          <p style={{ margin: "0 0 20px", fontSize: 15.5, color: "var(--ink-soft-2)", lineHeight: 1.55 }}>
-            {errorKind === "422"
-              ? "One of your loads has an earliest-start later than its finish-by, so the window would wrap around midnight. We plan a single midnight-to-midnight day at a time, so set the finish-by earlier the same day — or split an overnight charge across two plans."
-              : errorKind === "503"
-                ? "The grid data service is temporarily unavailable. Your inputs are saved, so please try again in a moment."
-                : "Something went wrong building the plan. Your inputs are saved — adjust the times and try again."}
+          <p className="mono" style={{ fontSize: 12, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--slate)", margin: "0 0 10px" }}>
+            {errorKind === "window_too_small"
+              ? "Window too short"
+              : errorKind === "baseline_outside"
+                ? "Baseline outside window"
+                : errorKind === "infeasible"
+                  ? "No feasible start"
+                  : errorKind === "forecast_unavailable"
+                    ? "Forecast unavailable"
+                    : "Something went wrong"}
+          </p>
+          <h2 style={{ fontWeight: 700, fontSize: 22, margin: "0 0 10px", letterSpacing: "-0.01em" }}>
+            {errorKind === "window_too_small"
+              ? "One of your loads needs a longer window."
+              : errorKind === "baseline_outside"
+                ? "That usual start isn't inside the window."
+                : errorKind === "infeasible"
+                  ? "We couldn't fit that load into its window."
+                  : errorKind === "forecast_unavailable"
+                    ? "We can't reach the forecast right now."
+                    : "We couldn't build the plan."}
+          </h2>
+          <p style={{ margin: "0 0 18px", fontSize: 15, lineHeight: 1.55, color: "var(--ink-soft-2)", maxWidth: "58ch" }}>
+            {errorKind === "window_too_small"
+              ? "The run window is shorter than the load takes. Go back and widen it — the form will suggest the smallest change that works."
+              : errorKind === "baseline_outside"
+                ? "The usual start has to be a time the load could actually run within the window you set. Go back and move it inside, or widen the window."
+                : errorKind === "infeasible"
+                  ? "There's no start time inside that window where the load finishes in time. Try a wider window."
+                  : errorKind === "forecast_unavailable"
+                    ? "The carbon or price feed didn't respond. Nothing is wrong with your plan — try again shortly."
+                    : "Something went wrong building the plan. Try again, or change the loads."}
           </p>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-            <button type="button" onClick={backToForm} style={ctaPrimary}>{errorKind === "422" ? "Fix the times" : "Back to my plan"}</button>
+            <button type="button" onClick={backToForm} style={ctaPrimary}>
+              {errorKind === "window_too_small" || errorKind === "baseline_outside" || errorKind === "infeasible" ? "Fix the times" : "Back to my plan"}
+            </button>
           </div>
         </div>
       )}
