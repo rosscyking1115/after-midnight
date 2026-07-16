@@ -135,8 +135,12 @@ export function windowForChip(chip: Chip, noiseSensitive: boolean): Win;
 export function fits(win: Win, durationSlots: number): boolean;
 export function widen(win: Win, durationSlots: number): Win | null;
 export function defaultBaseline(win: Win, durationSlots: number): number;
-export function classifyApiError(detail: string, status: number): ErrorKind;
+export function classifyApiError(detail: unknown, status: number): ErrorKind;
 ```
+
+`detail` is `unknown`, not `string`: our `HTTPException`s return a string, but FastAPI request-validation
+returns an array of `{ msg, loc }`. Today `lib/api.ts` stringifies that array to `[object Object]` and discards
+the status entirely, so it also gains an `ApiError` carrying both.
 
 `plan/page.tsx` keeps React state and rendering only. This is the unit worth testing and the unit C will edit.
 
