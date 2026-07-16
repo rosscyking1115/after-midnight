@@ -3,11 +3,11 @@ import Link from "next/link";
 import BandLegend from "@/components/BandLegend";
 import DayBand from "@/components/DayBand";
 import { money, grams } from "@/lib/format";
-import { avg, greenestWindow, slotToClock } from "@/lib/scoring";
+import { SLOTS, avg, greenestWindow, slotToClock } from "@/lib/scoring";
 import { getForecastServer } from "@/lib/server-data";
 
-// Home is a Server Component: it fetches tonight's real forecast for a default
-// region once and brackets the genuinely cleanest overnight window — a live
+// Home is a Server Component: it fetches the real forecast for a default region
+// once and brackets the genuinely cleanest window of the day — a live
 // recommendation, not a marketing hero. Degrades gracefully if the feed is down.
 const HERO_REGION = "south-west-england";
 const HERO_REGION_NAME = "South West England";
@@ -25,15 +25,20 @@ export default async function Home() {
   let cleanest = "";
   let saved = "";
   if (forecast) {
-    const win = greenestWindow(forecast.carbon_g, WASH_DUR, 0, 16, forecast.price_p);
+    // Search the whole day, not just the overnight hours: on a sunny day the
+    // cleanest slots are around midday, and capping the search at 08:00 returned
+    // a window dirtier than the baseline we compare it against.
+    const win = greenestWindow(forecast.carbon_g, WASH_DUR, 0, SLOTS, forecast.price_p);
     win.label = `run ${slotToClock(win.s)}–${slotToClock(win.e)}`;
     cleanest = `${slotToClock(win.s)}–${slotToClock(win.e)}`;
-    const saveG = Math.max(
-      0,
-      Math.round(WASH_KWH * (avg(forecast.carbon_g, BASELINE_SLOT, WASH_DUR) - avg(forecast.carbon_g, win.s, WASH_DUR))),
+    // BASELINE_SLOT is itself a candidate window, so the carbon saving cannot be
+    // negative. Price can be: the cleanest window is not always the cheapest, and
+    // that is reported rather than floored at zero.
+    const saveG = Math.round(
+      WASH_KWH * (avg(forecast.carbon_g, BASELINE_SLOT, WASH_DUR) - avg(forecast.carbon_g, win.s, WASH_DUR)),
     );
     const saveP = forecast.price_p
-      ? Math.max(0, Math.round(WASH_KWH * (avg(forecast.price_p, BASELINE_SLOT, WASH_DUR) - avg(forecast.price_p, win.s, WASH_DUR))))
+      ? Math.round(WASH_KWH * (avg(forecast.price_p, BASELINE_SLOT, WASH_DUR) - avg(forecast.price_p, win.s, WASH_DUR)))
       : 0;
     saved = forecast.price_p ? `${money(saveP)} · ${grams(saveG)}` : grams(saveG);
     band = (
@@ -59,8 +64,8 @@ export default async function Home() {
         </h1>
         <p style={{ fontSize: "clamp(16px,2.2vw,19px)", lineHeight: 1.55, maxWidth: "54ch", color: "var(--ink-soft-2)", margin: 0 }}>
           One horizontal day, midnight to midnight. The dark bars are how heavy
-          the grid is each half-hour; the amber bracket is the cleanest, cheapest
-          window to run a flexible load. That&apos;s the whole idea.
+          the grid is each half-hour; the amber bracket is the cleanest window to
+          run a flexible load. That&apos;s the whole idea.
         </p>
       </div>
 
