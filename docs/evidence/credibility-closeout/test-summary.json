@@ -1,0 +1,30 @@
+{
+  "captured_at_utc": "2026-07-16",
+  "source_commit": "d73acd5332e99557fe62c4400487a3bb20daadbc",
+  "python": {
+    "command": "uv run --extra dev python -m pytest",
+    "passed": 157,
+    "skipped": 1,
+    "warnings": 1,
+    "result": "pass",
+    "note": "One upstream Starlette TestClient/httpx deprecation warning."
+  },
+  "ruff": {
+    "command": "uv run --extra dev python -m ruff check .",
+    "result": "pass"
+  },
+  "web_typecheck": {
+    "command": "npm run typecheck",
+    "result": "pass"
+  },
+  "web_build": {
+    "command": "npm run build",
+    "result": "pass",
+    "routes": 8
+  },
+  "github_ci": {
+    "required_checks": 4,
+    "result": "pass",
+    "url": "https://github.com/rosscyking1115/community-energy-flex/actions/runs/29462275690"
+  }
+}

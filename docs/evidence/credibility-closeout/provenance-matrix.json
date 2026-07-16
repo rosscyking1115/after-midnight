@@ -1,0 +1,53 @@
+{
+  "source_commit": "d73acd5332e99557fe62c4400487a3bb20daadbc",
+  "cases": [
+    {
+      "case": "GB live forecast success",
+      "expected": {"carbon_source": "gb_live_forecast", "is_live_forecast": true, "is_fallback": false},
+      "evidence": "api/tests/test_carbon_provider.py and 2026-07-16 deployed London smoke",
+      "result": "pass"
+    },
+    {
+      "case": "GB timeout fallback",
+      "expected": {"carbon_source": "gb_sample_profile", "is_live_forecast": false, "is_fallback": true, "fallback_reason": "upstream_timeout"},
+      "evidence": "controlled provider-seam test; production was not sabotaged",
+      "result": "pass"
+    },
+    {
+      "case": "GB invalid payload fallback",
+      "expected": {"carbon_source": "gb_sample_profile", "fallback_reason": "invalid_payload"},
+      "evidence": "controlled provider-seam and cache-identity test",
+      "result": "pass"
+    },
+    {
+      "case": "Northern Ireland typical profile",
+      "expected": {"carbon_source": "ni_eirgrid_typical_profile", "is_live_forecast": false},
+      "evidence": "provider test and 2026-07-16 deployed NI smoke",
+      "result": "pass"
+    },
+    {
+      "case": "Northern Ireland profile failure",
+      "expected": {"carbon_source": "unavailable", "values": []},
+      "evidence": "controlled test confirms NI never receives GB sample data",
+      "result": "pass"
+    },
+    {
+      "case": "Agile available",
+      "expected": {"price_source": "octopus_agile_live", "price_is_live": true},
+      "evidence": "API contract test",
+      "result": "pass"
+    },
+    {
+      "case": "Agile unsupported or unpublished",
+      "expected": {"price_is_live": false, "price_unavailable_reason": "not_supported or not_published"},
+      "evidence": "API forecast tests",
+      "result": "pass"
+    },
+    {
+      "case": "Optimise provenance parity",
+      "expected": {"carbon_source": "curve source used", "price_source": "tariff source used", "robustness_score": "present"},
+      "evidence": "API tests and 2026-07-16 deployed optimise smoke",
+      "result": "pass"
+    }
+  ]
+}

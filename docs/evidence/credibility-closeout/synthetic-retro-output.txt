@@ -1,0 +1,19 @@
+Synthetic forecast-error stress test
+
+  Source: built-in sample carbon curve (not a stored forecast vintage).
+  Transformations: exact, +8%, -6%, seeded +/-15% noise, and a 1h shift.
+  Random seed: 7. Schedule adherence and meter consumption are not observed.
+  Ratios are constructed-scenario diagnostics, not empirical performance.
+
+  Plan committed on the forecast: 491 g CO2 saving expected across 4 loads.
+
+  How the day turned out          forecast    actual cond. ratio   fc MAE  still saved?
+  -------------------------------------------------------------------------------------
+  Forecast was spot on               491 g     491 g      100%      0 g           yes
+  Grid ran 8% dirtier                491 g     530 g      108%     16 g           yes
+  Grid ran 6% cleaner                491 g     461 g       94%     12 g           yes
+  Noisy day (+/-15%)                 491 g     518 g      106%     15 g           yes
+  Evening peak came 1h late          491 g     332 g       68%     20 g           yes
+
+  Across 5 constructed scenarios: conditional ex-post ratio averaged 95% of forecast saving; the fixed schedule saved carbon in 5/5.
+  Cost is unchanged in every row - Agile prices are known day-ahead, so carbon is the only thing the forecast can get wrong.

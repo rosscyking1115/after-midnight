@@ -1,0 +1,28 @@
+{
+  "release": "Community Energy Flex v0.2.0 credibility closeout",
+  "target_tag": "credibility-closeout-v0.2.0",
+  "captured_at_utc": "2026-07-16",
+  "source_commit": "d73acd5332e99557fe62c4400487a3bb20daadbc",
+  "ci_run": "https://github.com/rosscyking1115/community-energy-flex/actions/runs/29462275690",
+  "versions": {
+    "community_energy_flex": "0.2.0",
+    "community_energy_api": "0.2.0",
+    "web": "0.2.0",
+    "python": "3.12.13",
+    "fastapi": "0.139.0",
+    "node": "24.15.0",
+    "npm": "11.13.0",
+    "uv": "0.11.24"
+  },
+  "contract_hashes": {
+    "canonical_openapi_sha256": "92e420f75a89c203b64e86b01f7762bdcd8f654e7ff52c7e1857a1c196a675cd",
+    "generated_types_sha256": "80d88f416945390e460e2b5314289e9542d0bfebd5ecaed8e06724f48a35b0a4"
+  },
+  "synthetic_input_hashes": {
+    "demo_py_sha256": "5498b9a109c3b1d4d80c679e0616f1a2d647bb7277558a0e12696324f2814355",
+    "retro_demo_py_sha256": "c2abe6c5cb17f2c68082e9f7357050c8dd72a35a7fe5c2bcbe93e4c53a1c67a6",
+    "dbt_seed_sha256": "5b0b081eef5660f9d7a0e8487d240c7441304993140aa0ff0b3af71eac828367",
+    "ni_profile_sha256": "d62fb28535db79625d3a41d2e3ececc0eeeb315d6a1dbaaafd4c2c932f088b7b"
+  },
+  "evidence_boundary": "Case-study, dashboard, and retro values are synthetic-household demonstrations; schedule adherence and customer outcomes are not observed."
+}
