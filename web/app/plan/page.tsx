@@ -6,7 +6,15 @@ import BandLegend from "@/components/BandLegend";
 import DayBand from "@/components/DayBand";
 import { getAppliances, getForecast, getRegions, optimise } from "@/lib/api";
 import { money, grams } from "@/lib/format";
-import { clockToSlot, parseWindow, slotToClock, type Window } from "@/lib/scoring";
+import { parseWindow, slotToClock, type Window } from "@/lib/scoring";
+import {
+  CHIPS,
+  defaultBaseline,
+  fits,
+  widen,
+  windowForChip,
+  type Chip,
+} from "@/lib/planning";
 import type {
   Appliance,
   Forecast,
@@ -27,6 +35,8 @@ interface Added {
   energy_kwh: number;
   duration_hours: number;
   durSlots: number;
+  chip: Chip;
+  noiseSensitive: boolean;
   earliest: number; // slot
   finishBy: number; // end slot (1–48)
   preferred: number; // slot
@@ -81,8 +91,8 @@ export default function PlanPage() {
 
   function togglePreset(a: Appliance) {
     const durSlots = Math.max(1, Math.round(a.duration_hours * 2));
-    const finishBy = a.typical_latest ? clockToSlot(a.typical_latest) : 16;
-    const preferred = Math.min(38, Math.max(0, finishBy - durSlots));
+    const noiseSensitive = a.noise_sensitive;
+    const win = windowForChip("anytime", noiseSensitive);
     setAdded((prev) =>
       prev.some((x) => x.id === a.id)
         ? prev.filter((x) => x.id !== a.id)
@@ -95,26 +105,61 @@ export default function PlanPage() {
               energy_kwh: a.energy_kwh,
               duration_hours: a.duration_hours,
               durSlots,
-              earliest: 0,
-              finishBy: Math.max(durSlots, finishBy),
-              preferred,
+              chip: "anytime",
+              noiseSensitive,
+              earliest: win.earliest,
+              finishBy: win.finishBy,
+              preferred: defaultBaseline(win, durSlots),
             },
           ],
     );
   }
 
-  function setTime(key: string, field: "earliest" | "finishBy" | "preferred", v: number) {
-    setAdded((prev) => prev.map((a) => (a.key === key ? { ...a, [field]: v } : a)));
+  function chooseChip(key: string, chip: Chip) {
+    setAdded((prev) =>
+      prev.map((a) => {
+        if (a.key !== key) return a;
+        if (chip === "custom") return { ...a, chip };
+        const win = windowForChip(chip, a.noiseSensitive);
+        return { ...a, chip, ...win, preferred: defaultBaseline(win, a.durSlots) };
+      }),
+    );
   }
 
-  const canOpt = !!regionId && !!tariff && added.length > 0;
+  function applyWiden(key: string) {
+    setAdded((prev) =>
+      prev.map((a) => {
+        if (a.key !== key) return a;
+        const w = widen({ earliest: a.earliest, finishBy: a.finishBy }, a.durSlots);
+        if (!w) return a;
+        return { ...a, ...w, preferred: defaultBaseline(w, a.durSlots) };
+      }),
+    );
+  }
+
+  function setTime(key: string, field: "earliest" | "finishBy" | "preferred", v: number) {
+    setAdded((prev) =>
+      prev.map((a) => {
+        if (a.key !== key) return a;
+        const next = { ...a, [field]: v };
+        if (field === "preferred") return next;
+        const win = { earliest: next.earliest, finishBy: next.finishBy };
+        return fits(win, a.durSlots) ? { ...next, preferred: defaultBaseline(win, a.durSlots) } : next;
+      }),
+    );
+  }
+
+  const blockingLoad = added.find((a) => !fits({ earliest: a.earliest, finishBy: a.finishBy }, a.durSlots));
+  const canOpt = !!regionId && !!tariff && added.length > 0 && !blockingLoad;
   const optHint = !regionId
     ? "Pick a region to begin."
     : !tariff
       ? "Choose your tariff."
       : added.length === 0
         ? "Add at least one load."
-        : "We'll fetch the forecast and bracket your windows.";
+        : blockingLoad
+          ? `${blockingLoad.name}: the window is too short.`
+          : "We'll fetch the forecast and bracket your windows.";
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -236,7 +281,7 @@ export default function PlanPage() {
           {/* 03 loads */}
           <fieldset style={{ ...fieldset, ...(regionId ? {} : dim) }}>
             <legend style={{ ...legend, margin: "0 0 6px" }}><span className="mono" style={stepNo}>03</span><span style={stepTitle}>Loads to move</span></legend>
-            <p style={{ margin: "0 0 14px", fontSize: 13.5, color: "var(--slate)" }}>Add a preset, then set clock times: earliest it can start, when it must finish, and when you&apos;d <em>usually</em> run it (your baseline).</p>
+            <p style={{ margin: "0 0 14px", fontSize: 13.5, color: "var(--slate)" }}>Add a preset, then choose when it can run. We&apos;ll find the cleanest window inside it.</p>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8, margin: "0 0 18px" }}>
               {appliances.map((a) => {
                 const on = added.some((x) => x.id === a.id);
@@ -261,9 +306,60 @@ export default function PlanPage() {
                       <button type="button" onClick={() => setAdded((p) => p.filter((x) => x.key !== a.key))} style={removeBtn}>Remove {a.name}</button>
                     </div>
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 12 }}>
-                      <TimeField label="Earliest start" value={a.earliest} opts={START_OPTS} onChange={(v) => setTime(a.key, "earliest", v)} />
-                      <TimeField label="Finish by" value={a.finishBy} opts={FINISH_OPTS} onChange={(v) => setTime(a.key, "finishBy", v)} />
-                      <TimeField label="Usual start (baseline)" value={a.preferred} opts={START_OPTS} onChange={(v) => setTime(a.key, "preferred", v)} />
+                      <div style={{ gridColumn: "1 / -1", display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 4 }}>
+                        {CHIPS.map((c) => {
+                          const w = windowForChip(c.id, a.noiseSensitive);
+                          const disabled = c.id !== "custom" && !fits(w, a.durSlots);
+                          return (
+                            <button
+                              key={c.id}
+                              type="button"
+                              disabled={disabled}
+                              aria-pressed={a.chip === c.id}
+                              title={disabled ? `${a.name} needs ${a.duration_hours}h; ${c.label} is shorter.` : undefined}
+                              onClick={() => chooseChip(a.key, c.id)}
+                              style={{
+                                padding: "6px 12px",
+                                borderRadius: 999,
+                                fontSize: 13,
+                                cursor: disabled ? "not-allowed" : "pointer",
+                                border: "1px solid var(--line)",
+                                background: a.chip === c.id ? "var(--ink)" : "var(--panel)",
+                                color: disabled ? "var(--slate-mute)" : a.chip === c.id ? "var(--paper)" : "var(--ink)",
+                              }}
+                            >
+                              {c.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {a.chip === "custom" && (
+                        <>
+                          <TimeField label="Earliest start" value={a.earliest} opts={START_OPTS} onChange={(v) => setTime(a.key, "earliest", v)} />
+                          <TimeField label="Finish by" value={a.finishBy} opts={FINISH_OPTS} onChange={(v) => setTime(a.key, "finishBy", v)} />
+                          <TimeField
+                            label="Usual start (baseline)"
+                            value={a.preferred}
+                            opts={START_OPTS.filter((o) => o.v >= a.earliest && o.v <= a.finishBy - a.durSlots)}
+                            onChange={(v) => setTime(a.key, "preferred", v)}
+                          />
+                        </>
+                      )}
+                      {!fits({ earliest: a.earliest, finishBy: a.finishBy }, a.durSlots) && (
+                        <p role="status" style={{ gridColumn: "1 / -1", margin: "6px 0 0", fontSize: 13, color: "var(--ink)" }}>
+                          {a.earliest >= a.finishBy
+                            ? "Finish-by must be after earliest start. We plan a single midnight-to-midnight day, so a window that crosses midnight isn't supported yet."
+                            : `A ${a.duration_hours}-hour ${a.name.toLowerCase()} needs at least a ${a.duration_hours}-hour window — you've allowed ${((a.finishBy - a.earliest) / 2).toFixed(1)} hours.`}
+                          {(() => {
+                            const w = widen({ earliest: a.earliest, finishBy: a.finishBy }, a.durSlots);
+                            return w ? (
+                              <button type="button" onClick={() => applyWiden(a.key)} style={{ marginLeft: 10, textDecoration: "underline", background: "none", border: "none", cursor: "pointer", color: "var(--ink)", font: "inherit" }}>
+                                Widen to {slotToClock(w.earliest)}–{slotToClock(w.finishBy)}
+                              </button>
+                            ) : null;
+                          })()}
+                        </p>
+                      )}
                     </div>
                   </div>
                 ))}
