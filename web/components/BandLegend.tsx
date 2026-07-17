@@ -37,7 +37,7 @@ export default function BandLegend({
       {hasBaseline && (
         <span style={item}>
           <span aria-hidden="true" style={{ width: 0, height: 14, borderLeft: "2px dashed var(--ink)", display: "inline-block" }} />
-          usual · your baseline
+          usual · the baseline start
         </span>
       )}
     </div>

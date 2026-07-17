@@ -7,8 +7,8 @@ export const metadata: Metadata = {
 
 const ROWS = [
   {
-    h: "The baseline is your habit",
-    p: "Every saving is measured against the usual start you tell us — not a best case or a national average. If you would normally run the wash at 19:00, that is the number the recommended window is compared to. Change the baseline and the saving changes with it.",
+    h: "The baseline is a typical evening start",
+    p: "Every saving is measured against a baseline start — by default a typical 19:00 run, moved inside your chosen window when 19:00 doesn't fit. It is not a best case or a national average. Under Custom you can set the baseline yourself, and the saving is recalculated against it.",
   },
   {
     h: "Two channels: price and carbon",
